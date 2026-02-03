@@ -1,12 +1,11 @@
-# Project: City-Council-Meeting-Analyzer
-# Version: V0.2.004
+# City Council Analyzer Configuration
 
-ingestion:
-  force_skip: [] # Manually ignore specific Meeting IDs here
+# IDs to skip (Manually ignore corrupted files or irrelevant meetings)
+force_skip:
+  - "ID_12345"
+  - "ID_67890"
 
-transcription:
-  model: "large-v3"
-  device: "cuda" # Change to "cpu" if no NVIDIA GPU is present
-
-analysis:
-  endpoint: "http://localhost:1234/v1"
+# Analysis Parameters
+analysis_goals:
+  - "public_speaker_intent"
+  - "contentious_issue_tracking"
