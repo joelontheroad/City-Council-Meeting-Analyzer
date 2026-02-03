@@ -1,11 +1,26 @@
 # City Council Analyzer Configuration
 
 # IDs to skip (Manually ignore corrupted files or irrelevant meetings)
-force_skip:
-  - "ID_12345"
-  - "ID_67890"
+# Examples: 
+# force_skip:
+#   - "20240523-001"  # Example Austin Meeting ID
+#   - "CC_MEETING_99" # Example Generic ID
 
-# Analysis Parameters
-analysis_goals:
-  - "public_speaker_intent"
-  - "contentious_issue_tracking"
+force_skip: [] # Leave empty to process all discovered meetings
+
+# Analysis Goals
+# The following are examples of how to set your intent. 
+# To use one, uncomment the lines and modify to fit your needs.
+
+# Example A: Investigating Housing/Zoning
+# analysis_goals:
+#   topic: "Zoning Code Changes"
+#   intent_to_detect: "Identify if the speaker is a resident of the affected neighborhood and whether their primary concern is 'property value' or 'community character'."
+#   keywords:
+#     - "setback"
+#     - "density"
+#     - "single-family"
+#     - "zoning"
+
+# ... (rest of Example B and C as previously written)
+
