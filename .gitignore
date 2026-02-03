@@ -1,0 +1,20 @@
+# Project: City-Council-Meeting-Analyzer
+# Security: Prevents PII and local environment leaks
+
+# Secrets and local config
+.env
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Local Data (Crucial for GDPR privacy)
+data/
+logs/
+*.mp4
+*.wav
+*.json
+*.csv

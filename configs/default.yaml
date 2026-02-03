@@ -1,0 +1,12 @@
+# Project: City-Council-Meeting-Analyzer
+# Version: V0.2.004
+
+ingestion:
+  force_skip: [] # Manually ignore specific Meeting IDs here
+
+transcription:
+  model: "large-v3"
+  device: "cuda" # Change to "cpu" if no NVIDIA GPU is present
+
+analysis:
+  endpoint: "http://localhost:1234/v1"
