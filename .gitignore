@@ -1,20 +1,19 @@
+# """
 # Project: City-Council-Meeting-Analyzer
-# Security: Prevents PII and local environment leaks
+# Security: NIST-Aligned Privacy Protection
+# """
 
-# Secrets and local config
+# Secrets
 .env
+
+# Data - Keep PII local
+data/
+reports/
 
 # Python artifacts
 __pycache__/
 *.py[cod]
 *$py.class
-venv/
-.venv/
 
-# Local Data (Crucial for GDPR privacy)
-data/
-logs/
-*.mp4
-*.wav
-*.json
-*.csv
+# OS artifacts
+.DS_Store

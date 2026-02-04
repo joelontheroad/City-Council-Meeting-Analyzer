@@ -1,0 +1,20 @@
+# """
+# Project: City-Council-Meeting-Analyzer
+# Version: V0.2.004
+# Security: GDPR-Ready (Privacy by Design)
+# Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
+# """
+
+City Council Meeting Analyzer
+Copyright 2026 [Your Name or Organization]
+
+This product includes software developed for the purpose of 
+confidential municipal data analysis and local-first AI transcription.
+
+Principles & Standards:
+- NIST SP 800-122 (Guide to Protecting the Confidentiality of PII)
+- GDPR Privacy by Design (Operational Autonomy & Data Minimization)
+
+Third-party software utilized:
+- faster-whisper (https://github.com/SYSTRAN/faster-whisper)
+- OpenAI Python Library (https://github.com/openai/openai-python)

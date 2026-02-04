@@ -1,82 +1,74 @@
+"""
+Project: City-Council-Meeting-Analyzer
+Version: V0.2.004
+Security: GDPR-Ready (Privacy by Design)
+Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
+
+Workflow Logic:
+1. Initialize environment (Local/SMB storage paths).
+2. [Online Mode]: Fetch media via Austin ATXN Scraper.
+3. [Air-Gap Capability - if desired]: Run Transcription & Intent Engine 100% 
+   offline using local GPU (NVIDIA) and local LLM inference server.
+"""
+
 import argparse
 import sys
 import os
 import yaml
-from utils.system_checks import check_disk_space, verify_environment
+from utils.system_checks import verify_environment
+from jurisdictions.austin_tx import AustinScraper
+from analysis.transcriber import MeetingTranscriber
+from analysis.intent_engine import IntentEngine
 
 def load_config():
-    """Loads the YAML configuration for force-skipping and analysis goals."""
     config_path = "configs/default.yaml"
-    if not os.path.exists(config_path):
-        # Fallback if config is missing during initial setup
-        return {"force_skip": [], "analysis_goals": []}
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
+def ensure_paths(paths):
+    for key, path in paths.items():
+        os.makedirs(path, exist_ok=True)
+
 def main():
-    # Setup CLI Arguments with Air-Gap Workflow descriptions
-    parser = argparse.ArgumentParser(
-        description="City-Council-Meeting-Analyzer: A local-first, Private AI pipeline for sovereign data analysis.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Workflow Examples:
-  1. Online Phase (Ingestion):  python3 main.py --download-only
-  2. Offline Phase (Analysis):   python3 main.py --local-only --mask
-
-Note: Designed for Pop!_OS/Ubuntu. Requires an NVIDIA GPU for local inference.
-        """
-    )
-    
-    # Workflow Flags
-    parser.add_argument("--download-only", action="store_true", 
-                        help="Network-active phase: Fetch source media and AI models to local SSD.")
-    
-    parser.add_argument("--local-only", action="store_true", 
-                        help="Air-Gap phase: Process only what is in the local /data folder. No network calls.")
-    
-    parser.add_argument("--mask", action="store_true", 
-                        help="Anonymize speaker identities using SHA-256 and your local .env salt.")
-
+    parser = argparse.ArgumentParser(description="City-Council-Meeting-Analyzer (V0.2.004)")
+    parser.add_argument("--download-only", action="store_true", help="Online: Fetch raw media.")
+    parser.add_argument("--local-only", action="store_true", help="Offline: Process local media.")
+    parser.add_argument("--mask", action="store_true", help="Enable NIST-aligned pseudonymization.")
     args = parser.parse_args()
 
-    # 1. System Integrity Checks
-    # We check for 20GB of free space and the existence of the .env salt
-    if not check_disk_space(min_gb=20) or not verify_environment():
-        print("❌ System check failed. Please resolve the issues above before continuing.")
+    config = load_config()
+    paths = config.get("paths", {})
+    ensure_paths(paths)
+    
+    if not verify_environment():
         sys.exit(1)
 
-    # 2. Load Configuration
-    config = load_config()
-    force_skip_ids = config.get("force_skip", [])
-    
-    # 3. WORKFLOW EXECUTION
-    
-    # PHASE 1: Online / Ingestion
     if args.download_only:
-        print("\n🌐 PHASE 1: Online Ingestion Started...")
-        print(f"Checking for new meetings (skipping {len(force_skip_ids)} IDs from config)...")
-        # TODO: Trigger your Austin-specific scraper here
-        # scraper.run(skip_list=force_skip_ids)
-        print("\n✅ Ingestion Complete. Source files and models are cached.")
-        print("🛡️  You can now safely disconnect the pfSense router for Air-Gapped analysis.")
+        scraper = AustinScraper(storage_path=paths['raw_video'])
+        scraper.run(skip_list=config.get('force_skip', []))
         return
 
-    # PHASE 2: Offline / Analysis
     if args.local_only:
-        print("\n🛡️  PHASE 2: Offline Analysis (Air-Gapped Mode)...")
-        if args.mask:
-            print("🔐 PII Masking: ENABLED (Using local SHA-256 Salt)")
-        else:
-            print("⚠️  PII Masking: DISABLED (Raw names will be preserved)")
-            
-        # TODO: Trigger your Transcription/Analysis logic here
-        # analyzer.run_local_batch(mask=args.mask)
-        print("\n✅ Analysis complete. Results saved to /output.")
-        return
+        transcriber = MeetingTranscriber()
+        engine = IntentEngine()
 
-    # DEFAULT BEHAVIOR (Run both if no flags are passed)
-    print("\n🚀 Running full pipeline (Standard Mode)...")
-    # In a standard run, we would call Phase 1 then Phase 2 sequentially.
+        video_files = [f for f in os.listdir(paths['raw_video']) if f.endswith(".mp4")]
+        for filename in video_files:
+            m_id = filename.replace(".mp4", "")
+            if m_id in config.get('force_skip', []):
+                print(f"⏭️ Skipping ID: {m_id} (per config)")
+                continue
+
+            v_path = os.path.join(paths['raw_video'], filename)
+            t_path = os.path.join(paths['transcripts'], f"{m_id}.json")
+            
+            transcriber.transcribe(v_path, t_path)
+            engine.analyze_transcript(
+                meeting_id=m_id,
+                transcript_path=t_path,
+                output_dir=paths['archive_dir'],
+                mask_enabled=args.mask
+            )
 
 if __name__ == "__main__":
     main()

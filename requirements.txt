@@ -1,9 +1,11 @@
-# Pinned for Integrity (OWASP A03:2025)
-faster-whisper==1.2.1
-pysubs2==1.8.0
-openai==1.12.0
-spacy==3.8.2
-python-dotenv==1.2.1
-pyyaml==6.0.3
-requests==2.32.3
+# """
+# Project: City-Council-Meeting-Analyzer
+# Version: V0.2.004
+# Security: GDPR-Ready (Privacy by Design)
+# Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
+# """
 
+faster-whisper==1.0.3   # GPU-accelerated transcription
+openai>=1.0.0           # Local LM Studio interface
+pyyaml                  # Config management
+python-dotenv           # .env/Salt management
