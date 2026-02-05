@@ -1,32 +1,26 @@
-"""
-Project: City-Council-Meeting-Analyzer
-Version: V0.2.004
-Security: GDPR-Ready (Privacy by Design)
-Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
-"""
+# """
+# Project: City-Council-Meeting-Analyzer
+# Version: V0.2.004
+# Security: NIST-Aligned Privacy Protection
+# Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
+# """
 
-# DIRECTORY MANAGEMENT
-paths:
-  work_dir: "./data"
-  raw_video: "./data/raw_video"
-  transcripts: "./data/transcripts"
-  archive_dir: "./reports" # Final destination (Point to SMB mount here)
+storage:
+  # RAID 1 (Fast VM Disk) for active processing
+  buffer_path: "./temp_buffer"
+  # RAID 6 (3TB Array) for long-term storage
+  vault_path: "./data/vault"
 
-# FORCE SKIP LOGIC
-# Examples: 
-# force_skip:
-#   - "20240523-001"
-force_skip: [] 
+processing:
+  # GPU Safety: 12GB cards should use 'medium' for large files
+  model_size: "medium"
+  compute_type: "float16"
+  
+  # Logic Toggles
+  skip_existing_transcripts: true
+  auto_hardware_check: true
 
-# ANALYSIS GOALS & INTENT EXAMPLES
-# --- Example A: Investigating Housing/Zoning ---
-# analysis_goals:
-#   topic: "Zoning Code Changes"
-#   intent_to_detect: "Identify resident concerns regarding community character."
-#   keywords: ["setback", "density", "single-family", "zoning"]
-
-# Default Active Goal
-analysis_goals:
-  topic: "General Meeting Summary"
-  intent_to_detect: "Provide a neutral summary of all discussed agenda items."
-  keywords: []
+  # Blacklisted Meeting IDs
+  force_skip:
+    - "id_to_skip_001"
+    

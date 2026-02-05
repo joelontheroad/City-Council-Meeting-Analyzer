@@ -2,23 +2,37 @@
 # Project: City-Council-Meeting-Analyzer
 # Version: V0.2.004
 # Security: NIST-Aligned Privacy Protection
+# Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
 # """
 
-# Secrets - CRITICAL: Never commit the Salt
+# Local Secrets
 .env
 
-# Data Storage - Keep raw PII and transcripts on local/SMB only
-data/
-reports/
+# Storage Buffers (RAID 1 Mirror)
+temp_buffer/
+*.mp4
+*.m3u8
+*.ts
 
-# Python environment & cache
+# Data Vault (RAID 6 Archival)
+# We ignore the data directory to keep videos and transcripts off GitHub
+data/
+vault/
+
+# Python Environment & Cache
 __pycache__/
 *.py[cod]
 *$py.class
-venv/
 .venv/
+env/
+venv/
+.pytest_cache/
 
-# System / IDE files
+# System Files
 .DS_Store
-.vscode/
-.idea/
+Thumbs.db
+
+# Reports (Analysis output)
+reports/*.pdf
+reports/*.csv
+reports/*.json

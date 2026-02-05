@@ -1,74 +1,52 @@
 """
 Project: City-Council-Meeting-Analyzer
 Version: V0.2.004
-Security: GDPR-Ready (Privacy by Design)
+Security: NIST-Aligned Privacy Protection
 Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
-
-Workflow Logic:
-1. Initialize environment (Local/SMB storage paths).
-2. [Online Mode]: Fetch media via Austin ATXN Scraper.
-3. [Air-Gap Capability - if desired]: Run Transcription & Intent Engine 100% 
-   offline using local GPU (NVIDIA) and local LLM inference server.
 """
 
-import argparse
-import sys
 import os
 import yaml
-from utils.system_checks import verify_environment
-from jurisdictions.austin_tx import AustinScraper
-from analysis.transcriber import MeetingTranscriber
-from analysis.intent_engine import IntentEngine
+import shutil
+from utils.system_checks import verify_environment, get_optimal_model, clear_memory
+from analysis.transcriber import Transcriber
 
 def load_config():
-    config_path = "configs/default.yaml"
-    with open(config_path, "r") as f:
+    with open("configs/default.yaml", "r") as f:
         return yaml.safe_load(f)
 
-def ensure_paths(paths):
-    for key, path in paths.items():
-        os.makedirs(path, exist_ok=True)
-
 def main():
-    parser = argparse.ArgumentParser(description="City-Council-Meeting-Analyzer (V0.2.004)")
-    parser.add_argument("--download-only", action="store_true", help="Online: Fetch raw media.")
-    parser.add_argument("--local-only", action="store_true", help="Offline: Process local media.")
-    parser.add_argument("--mask", action="store_true", help="Enable NIST-aligned pseudonymization.")
-    args = parser.parse_args()
-
-    config = load_config()
-    paths = config.get("paths", {})
-    ensure_paths(paths)
-    
     if not verify_environment():
-        sys.exit(1)
-
-    if args.download_only:
-        scraper = AustinScraper(storage_path=paths['raw_video'])
-        scraper.run(skip_list=config.get('force_skip', []))
         return
 
-    if args.local_only:
-        transcriber = MeetingTranscriber()
-        engine = IntentEngine()
+    config = load_config()
+    buffer_dir = config['storage']['buffer_path']
+    vault_dir = config['storage']['vault_path']
+    transcript_dir = os.path.join(vault_dir, "transcripts")
+    video_vault = os.path.join(vault_dir, "raw_video")
 
-        video_files = [f for f in os.listdir(paths['raw_video']) if f.endswith(".mp4")]
-        for filename in video_files:
-            m_id = filename.replace(".mp4", "")
-            if m_id in config.get('force_skip', []):
-                print(f"⏭️ Skipping ID: {m_id} (per config)")
-                continue
+    # Determine Model
+    selected_model = get_optimal_model(config)
+    
+    # Example Loop Logic
+    meeting_id = "austin_305483"
+    final_video_path = os.path.join(video_vault, f"{meeting_id}.mp4")
+    final_transcript_path = os.path.join(transcript_dir, f"{meeting_id}.txt")
 
-            v_path = os.path.join(paths['raw_video'], filename)
-            t_path = os.path.join(paths['transcripts'], f"{m_id}.json")
-            
-            transcriber.transcribe(v_path, t_path)
-            engine.analyze_transcript(
-                meeting_id=m_id,
-                transcript_path=t_path,
-                output_dir=paths['archive_dir'],
-                mask_enabled=args.mask
-            )
+    # 1. Check Force Skip
+    if meeting_id in config['processing']['force_skip']:
+        print(f"⚠️ Force Skip triggered for {meeting_id}")
+        return
+
+    # 2. Check if already analyzed
+    if config['processing']['skip_existing_transcripts'] and os.path.exists(final_transcript_path):
+        print(f"✅ Already processed {meeting_id}. Jumping to Intent Engine.")
+    else:
+        # Perform Transcription
+        ts = Transcriber(selected_model, config['processing']['compute_type'])
+        ts.run(final_video_path, final_transcript_path)
+
+    print("🏁 Phase complete.")
 
 if __name__ == "__main__":
     main()
