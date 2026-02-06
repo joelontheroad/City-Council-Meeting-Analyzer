@@ -1,50 +1,34 @@
-"""
-Project: City-Council-Meeting-Analyzer
-Version: V0.2.004
-Security: GDPR-Ready (Privacy by Design)
-Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
-"""
+# ****************************************************************************
+# * *
+# * City Council Meeting Analyzer                                            *
+# * Version: 0.2.006                                                         *
+# * Jurisdiction: Austin, TX (Swagit Connector)                              *
+# * Author: joelontheroad                                                    *
+# * *
+# ****************************************************************************
 
 import os
-import requests
 
-class AustinScraper:
-    """
-    Scraper for Austin, TX (ATXN) Media Archive.
-    Designed to fetch raw meeting video for local processing.
-    """
-    def __init__(self, storage_path):
-        self.storage_path = storage_path
-        self.base_url = "https://www.austintexas.gov/department/atxn"
+class Connector:
+    def __init__(self):
+        self.name = "Austin, TX"
+        self.domain_hint = "austintx.new.swagit.com"
 
-    def run(self, skip_list=None):
-        """
-        Main execution loop for the scraper.
-        
-        Args:
-            skip_list (list): Meeting IDs to ignore, provided from configs/default.yaml
-        """
-        skip_list = skip_list or []
-        
-        print(f"🌐 Accessing Austin ATXN Archive...")
-        
-        # In a full implementation, we would parse the ATXN video feed here.
-        # For V0.2.004, we provide the skeletal logic to respect the skip list.
-        
-        discovered_meetings = ["20260201-001", "20260203-002"] # Mock IDs for flow
-        
-        for m_id in discovered_meetings:
-            if m_id in skip_list:
-                print(f"⏭️  Skipping ID: {m_id} (Listed in Force Skip)")
-                continue
-                
-            print(f"📥 Found new meeting: {m_id}. Starting download to {self.storage_path}...")
-            
-            # Logic: download_mp4(m_id)
-            
-        print("✅ Austin Scrape cycle complete.")
+    def can_handle(self, url):
+        """Claims the URL if it belongs to Austin's Swagit portal."""
+        return self.domain_hint in url
 
-    def _download_mp4(self, meeting_id):
-        """Internal method to stream video to the work_dir."""
-        # Implementation for requests.get(stream_url, stream=True)
-        pass
+    def resolve_video_id(self, url):
+        """Extracts the unique Swagit ID from the URL."""
+        parts = url.strip("/").split("/")
+        if "videos" in parts:
+            idx = parts.index("videos")
+            if len(parts) > idx + 1:
+                return parts[idx + 1]
+        return "unknown_meeting"
+
+    def get_standardized_filename(self, url, mode="audio"):
+        """Standardized name based on the ID and requested media mode."""
+        meeting_id = self.resolve_video_id(url)
+        extension = "m4a" if mode == "audio" else "mp4"
+        return f"austin_meeting_{meeting_id}.{extension}"

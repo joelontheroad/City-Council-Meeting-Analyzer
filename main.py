@@ -1,9 +1,9 @@
 # ****************************************************************************
 # * *
-# * City Council Meeting Analyzer                                           *
-# * Version: 0.2.004                                                        *
-# * Author: joelontheroad                                                   *
-# * License: As-Is / Experimental                                           *
+# * City Council Meeting Analyzer                                            *
+# * Version: 0.2.008 (Restored)                                              *
+# * Component: Main Orchestrator                                             *
+# * Author: joelontheroad                                                    *
 # * *
 # ****************************************************************************
 
@@ -11,77 +11,61 @@ import argparse
 import os
 import sys
 from utils.config_loader import get_paths
-from utils.privacy_manager import PrivacyManager
 from utils.downloader import CityCouncilDownloader
 from utils.processor import MeetingProcessor
+from jurisdictions import get_connector
 
 def main():
-    parser = argparse.ArgumentParser(description="Analyze City Council Meetings for Austin, TX.")
+    parser = argparse.ArgumentParser(
+        description="Analyze City Council Meetings. Automatically skips downloads if files exist.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
     
-    # Input group: URL or File
     input_group = parser.add_mutually_exclusive_group(required=True)
-    input_group.add_argument("--url", type=str, help="Single Swagit video URL to analyze")
+    input_group.add_argument("--url", type=str, help="URL to analyze")
     input_group.add_argument("--file", type=str, help="Text file containing a list of URLs")
     
-    # Flags
-    parser.add_argument("--mask", action="store_true", help="Enable NIST-compliant speaker anonymization")
-    parser.add_argument("--keywords", type=str, help="Comma-separated list of topics to highlight in summary")
+    parser.add_argument("--mask", action="store_true", help="Enable GDPR masking in report")
+    parser.add_argument("--video", action="store_true", help="Download video instead of default audio")
     
     args = parser.parse_args()
+    paths = get_paths()
+    
+    downloader = CityCouncilDownloader(staging_dir=paths['staging_buffer'])
+    processor = MeetingProcessor()
 
-    # 1. Load Environment & Paths
-    try:
-        paths = get_paths()
-    except FileNotFoundError as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    urls = [args.url] if args.url else []
+    if args.file and os.path.exists(args.file):
+        with open(args.file, 'r') as f:
+            urls = [line.strip() for line in f if line.strip()]
 
-    # 2. Initialize Components
-    privacy = PrivacyManager() if args.mask else None
-    downloader = CityCouncilDownloader(staging_path=paths['staging'], vault_path=paths['vault'])
-    processor = MeetingProcessor(vault_path=paths['vault'], keywords=args.keywords)
-
-    # 3. Handle Input
-    urls = []
-    if args.url:
-        urls.append(args.url)
-    elif args.file:
-        if os.path.exists(args.file):
-            with open(args.file, 'r') as f:
-                urls = [line.strip() for line in f if line.strip()]
-        else:
-            print(f"Error: Input file {args.file} not found.")
-            sys.exit(1)
-
-    # 4. Processing Loop
-    print(f"--- Starting analysis on {len(urls)} meeting(s) ---")
     for url in urls:
-        print(f"\nTarget: {url}")
-        
-        # Smart Check: Is it already in the vault?
-        video_path = downloader.check_vault(url)
-        
-        if not video_path:
-            print("Action: Video not found in vault. Starting download...")
-            video_path = downloader.run(url)
-        else:
-            print("Action: Video found in vault. Skipping download.")
+        connector = get_connector(url)
+        if not connector:
+            print(f"⚠️  No connector for: {url}")
+            continue
 
-        # AI Analysis Phase
-        if video_path:
-            transcript = processor.transcribe(video_path)
-            
-            if args.mask:
-                print("Action: Applying privacy masks to speaker names...")
-                transcript = privacy.anonymize_transcript(transcript)
-            
-            summary = processor.summarize(transcript)
-            processor.save_results(url, transcript, summary)
-            print("Success: Analysis complete.")
-        else:
-            print(f"Failed: Could not retrieve video for {url}")
+        # Use the connector to determine the filename
+        mode = "video" if args.video else "audio"
+        target_name = connector.get_standardized_filename(url, mode=mode)
+        expected_path = os.path.join(paths['staging_buffer'], target_name)
 
-    print("\n--- All tasks completed ---")
+        # THE RESTORED LOGIC: Check disk before doing anything
+        if os.path.exists(expected_path):
+            print(f"♻️  Local file found: {target_name}. Skipping download/transcription.")
+            final_media_path = expected_path
+        else:
+            print(f"🚀 File not found. Initiating {mode} download for {connector.name}...")
+            final_media_path = downloader.download_video(url, target_filename=target_name, mode=mode)
+
+        if final_media_path:
+            # We assume transcription is handled or already cached in a .txt file
+            # For this analysis sprint, we pass the content to LMStudio
+            with open(final_media_path, 'r', errors='ignore') as f:
+                content = f.read()
+            
+            report = processor.process(content, mask=args.mask)
+            print(f"\n--- ANALYSIS REPORT ---\n{report}\n")
 
 if __name__ == "__main__":
     main()

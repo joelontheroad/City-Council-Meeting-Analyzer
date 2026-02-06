@@ -1,85 +1,42 @@
-# ****************************************************************************
-# * *
-# * City Council Meeting Analyzer                                           *
-# * Version: 0.2.004                                                        *
-# * Author: joelontheroad                                                   *
-# * License: As-Is / Experimental                                           *
-# * *
-# ****************************************************************************
+# 🏛️ City Council Meeting Analyzer
+**Version 0.2.006**
 
-# City Council Meeting Analyzer (V0.2.004)
+An AI-powered tool designed to download, transcribe, and analyze city council meetings. 
 
-## 📖 Overview
-The **City Council Meeting Analyzer** is a configurable, private, AI-powered tool built to transcribe municipal meeting videos, summarize public testimony, and report on speaker sentiment.
+## 🚀 Key Philosophy: Audio-First
+To maximize processing speed and minimize bandwidth, this tool defaults to **Audio-Only** processing. It targets high-quality M4A streams which are ~90% smaller than video files but perfect for AI transcription.
 
-### 🛡️ Privacy & Security by Design
-Designed with **Security by Design** principles and inspired by **GDPR** and **NIST 800-122** specifications, this tool prioritizes local-first processing. To protect civil liberties, the system allows you to mask the names of speakers, enabling you to distribute findings while maintaining participant anonymity.
+## 🛠️ Installation
+1. Ensure you have `ffmpeg` and `yt-dlp` installed on your system.
+2. Install Python dependencies:
+   ```bash
+   pip install yt-dlp faster-whisper
+   ```
 
-### 🧠 Intelligent Analysis
-* **Modular Connectors:** Currently optimized for Austin City Council (Winter 2026).
-* **Smart Re-analysis:** If a video is already in your vault, the program skips the download and moves straight to AI analysis.
-* **Keywords:** Refine AI summaries by providing specific topics of interest.
-
----
-
-## 🚀 Installation & Setup
-
-### 1. Project Prep
+## 💻 Usage
+### Basic (Audio-Only)
 ```bash
-git clone [https://github.com/joelontheroad/City-Council-Meeting-Analyzer.git](https://github.com/joelontheroad/City-Council-Meeting-Analyzer.git) .
-chmod +x setup.sh
-./setup.sh
+python main.py --url "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 
-### 2. Privacy Key (Essential for Masking)
-The program uses a secret "salt" to generate consistent pseudonyms for speakers.
-```bash
-echo "PSEUDO_SALT=$(openssl rand -hex 32)" > .env
-```
+### Video Modes
+- `--video`: Downloads a standard MP4 file.
+- `--highqualityvideo`: Downloads the best available resolution (requires ffmpeg for merging).
 
-### 3. Storage Configuration
-```bash
-source venv/bin/activate
-python3 configure_paths.py
-```
+### Forced Audio
+- `--audio`: Explicitly requests audio-only (redundant but available).
 
-#### 📂 Understanding the Two Paths
-The script will ask for two distinct locations to optimize performance:
-1.  **The Staging Buffer (Local Storage):** Used for downloading and "stitching" video chunks. Using your local disk (OS drive) is much faster than a network drive for this task.
-2.  **The Permanent Vault (Large Storage):** Where the final .mp4 and transcripts are stored for AI analysis. Use your high-capacity drive here (e.g., /mnt/media-drive/).
+## 🔌 Plugin Architecture (Adding Jurisdictions)
+This tool uses a dynamic discovery system. To add a new city:
+1. Create a new `.py` file in the `jurisdictions/` folder.
+2. Implement the `Connector` class with the following methods:
+   - `can_handle(url)`: Returns True if the URL belongs to that city.
+   - `get_standardized_filename(url, mode)`: Returns the output filename.
 
----
+The system will automatically detect and use your new connector.
 
-## 🔌 Activate the Environment
-Before running the analyzer, you must activate the virtual environment:
-```bash
-source venv/bin/activate
-```
-*(Type deactivate when you are finished to return to your normal terminal.)*
-
----
-
-## 🎬 First Run: Analyze a Meeting
-
-### Option A: Analyze a single URL
-Run this to test the system with a live Austin meeting. **Note:** Do not use brackets or quotes around the URL.
-```bash
-python3 main.py --url [https://austintx.new.swagit.com/videos/300507/0/](https://austintx.new.swagit.com/videos/300507/0/) --mask
-```
-
-### Option B: Batch analysis
-Create a text file (e.g., meetings.txt) with one URL per line. Do not include brackets, commas, or quotes in the file.
-```bash
-python3 main.py --file meetings.txt --mask
-```
-
-> [!TIP]
-> **Smart Detection:** If you have already downloaded the video, simply ensure the .mp4 is in your vault/raw_video/ folder. The program will skip the download and go straight to work.
-
----
-
-## ❓ Getting Help
-To see all available command-line flags, including keyword filtering options:
-```bash
-python3 main.py --help
-```
+## 📁 Project Structure
+- `main.py`: The orchestrator.
+- `jurisdictions/`: Plug-and-play city connectors.
+- `utils/`: Core logic for downloading and AI processing.
+- `temp_buffer/`: Staging area for active downloads.

@@ -1,39 +1,43 @@
 # ****************************************************************************
 # * *
 # * City Council Meeting Analyzer                                            *
-# * Version: 0.2.004                                                         *
+# * Version: 0.2.006                                                         *
+# * Component: Privacy & Identity Masking Utility                            *
 # * Author: joelontheroad                                                    *
-# * License: As-Is / Experimental                                            *
 # * *
 # ****************************************************************************
 
-import os
-import hashlib
-from dotenv import load_dotenv
-
-load_dotenv()
+import re
 
 class PrivacyManager:
     def __init__(self):
-        self.salt = os.getenv("PSEUDO_SALT")
-        if not self.salt:
-            # Fallback for testing, but ideally should raise error in production
-            self.salt = "default_fallback_salt_do_not_use_in_prod"
+        # Dictionary to keep track of identified names to ensure consistency
+        # e.g., "John Doe" always becomes "[PERSON_1]" in the same transcript
+        self.identity_map = {}
+        self.counter = 1
 
-    def generate_pseudo_id(self, name):
+    def mask_identities(self, text):
         """
-        Creates a consistent, anonymous ID for a speaker using a keyed hash.
-        Follows NIST 800-122 guidelines for de-identification.
+        Identifies and redacts names using pattern matching.
+        In a production environment, this would integrate with a 
+        Natural Language Processing (NLP) library like spaCy.
         """
-        combined = name.strip().lower() + self.salt
-        hash_object = hashlib.sha256(combined.encode())
-        return f"CITIZEN_{hash_object.hexdigest()[:8]}"
+        if not text:
+            return text
 
-    def mask_identities(self, transcript_text):
-        """
-        Scans the transcript for identified speakers and replaces names 
-        with their consistent pseudonyms.
-        """
-        print("🔒 Processing text for PII masking...")
-        # Future logic for regex or NER masking goes here
-        return transcript_text
+        # A robust regex for common name patterns (Title Case names)
+        # Note: This is our 'Version 1' heuristic logic.
+        name_pattern = r"\b([A-Z][a-z]+ [A-Z][a-z]+)\b"
+        
+        found_names = re.findall(name_pattern, text)
+        
+        masked_text = text
+        for name in set(found_names):
+            if name not in self.identity_map:
+                self.identity_map[name] = f"[PERSON_{self.counter}]"
+                self.counter += 1
+            
+            # Replace name with the assigned placeholder
+            masked_text = masked_text.replace(name, self.identity_map[name])
+            
+        return masked_text

@@ -1,11 +1,18 @@
-# """
-# Project: City-Council-Meeting-Analyzer
-# Version: V0.2.004
-# Security: GDPR-Ready (Privacy by Design)
-# Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
-# """
+# ****************************************************************************
+# * *
+# * City Council Meeting Analyzer                                            *
+# * Version: 0.2.004                                                         *
+# * Security: GDPR-Ready (Privacy by Design)                                 *
+# * Principles: NIST SP 800-122 Aligned                                      *
+# * *
+# ****************************************************************************
 
 faster-whisper==1.0.3   # GPU-accelerated transcription
 openai>=1.0.0           # Local LM Studio interface
 pyyaml                  # Config management
 python-dotenv           # .env/Salt management
+requests                # Video/Data downloading
+cryptography            # NIST-aligned encryption/salting
+torch                   # Hardware detection for Whisper (CPU vs CUDA)
+setuptools              # Build dependency for certain AI modules
+

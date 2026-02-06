@@ -1,26 +1,29 @@
-# """
-# Project: City-Council-Meeting-Analyzer
-# Version: V0.2.004
-# Security: NIST-Aligned Privacy Protection
-# Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
-# """
+# ****************************************************************************
+# * *
+# * City Council Meeting Analyzer                                            *
+# * Version: 0.2.004                                                         *
+# * Security: NIST-Aligned Privacy Protection                                *
+# * Principles: NIST SP 800-122 Aligned                                      *
+# * *
+# ****************************************************************************
 
 storage:
   # RAID 1 (Fast VM Disk) for active processing
-  buffer_path: "./temp_buffer"
+  staging_buffer: "./temp_buffer"
   # RAID 6 (3TB Array) for long-term storage
-  vault_path: "./data/vault"
+  permanent_vault: "./data/vault"
 
 processing:
   # GPU Safety: 12GB cards should use 'medium' for large files
+  # Options: 'tiny', 'base', 'small', 'medium', 'large-v3'
   model_size: "medium"
+  # Use 'int8' for CPU or 'float16' for GPU/CUDA
   compute_type: "float16"
   
   # Logic Toggles
   skip_existing_transcripts: true
   auto_hardware_check: true
 
-  # Blacklisted Meeting IDs
+  # Blacklisted Meeting IDs (Model Suggestion: Force Skip flag)
   force_skip:
     - "id_to_skip_001"
-    
