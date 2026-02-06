@@ -1,42 +1,35 @@
 # 🏛️ City Council Meeting Analyzer
-**Version 0.2.006**
 
-An AI-powered tool designed to download, transcribe, and analyze city council meetings. 
+An automated pipeline to download, transcribe, and analyze local government meetings using OpenAI Whisper and Local LLMs (via LM Studio).
 
-## 🚀 Key Philosophy: Audio-First
-To maximize processing speed and minimize bandwidth, this tool defaults to **Audio-Only** processing. It targets high-quality M4A streams which are ~90% smaller than video files but perfect for AI transcription.
+## 🚀 Quick Start
 
-## 🛠️ Installation
-1. Ensure you have `ffmpeg` and `yt-dlp` installed on your system.
-2. Install Python dependencies:
-   ```bash
-   pip install yt-dlp faster-whisper
-   ```
+1. **Analyze a Single Meeting** (Download + Transcribe + Summarize):
+   `python3 main.py --url <URL>`
 
-## 💻 Usage
-### Basic (Audio-Only)
-```bash
-python main.py --url "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-```
+2. **Batch Process Everything** (Summarize all transcripts in buffer):
+   `python3 main.py --summarize-all`
 
-### Video Modes
-- `--video`: Downloads a standard MP4 file.
-- `--highqualityvideo`: Downloads the best available resolution (requires ffmpeg for merging).
+## 🛠️ Configuration & Customization
 
-### Forced Audio
-- `--audio`: Explicitly requests audio-only (redundant but available).
+### 1. Analysis Focus (`configs/prompts.json`)
+You can change what the AI looks for by editing the `analysis_focus` in the prompts file.
+* **Default:** Zoning, infrastructure, and public safety.
+* **Example:** Change to "Focus on environmental policy and public park funding."
 
-## 🔌 Plugin Architecture (Adding Jurisdictions)
-This tool uses a dynamic discovery system. To add a new city:
-1. Create a new `.py` file in the `jurisdictions/` folder.
-2. Implement the `Connector` class with the following methods:
-   - `can_handle(url)`: Returns True if the URL belongs to that city.
-   - `get_standardized_filename(url, mode)`: Returns the output filename.
+### 2. Manual Skip (`utils/file_manager.py`)
+If a specific meeting ID is corrupted or should be ignored, add it to the `self.force_skip_ids` list in the FileManager.
 
-The system will automatically detect and use your new connector.
+### 3. Masking
+Use the `--mask` flag to trigger GDPR/PII masking logic (requires configuration in `processor.py`).
 
 ## 📁 Project Structure
-- `main.py`: The orchestrator.
-- `jurisdictions/`: Plug-and-play city connectors.
-- `utils/`: Core logic for downloading and AI processing.
-- `temp_buffer/`: Staging area for active downloads.
+* `temp_buffer/`: Raw media files and `.txt` transcripts.
+* `reports/`: Final AI-generated analysis in Markdown format.
+* `jurisdictions/`: Modular connectors for different city websites (Swagit, YouTube, etc.).
+* `configs/`: Centralized prompts and settings.
+
+## ⚙️ Requirements
+* **Python 3.10+**
+* **FFmpeg** (Required for Whisper audio processing)
+* **LM Studio** (Running a local server at `http://localhost:1234`)

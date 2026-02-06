@@ -11,7 +11,7 @@ storage:
   # RAID 1 (Fast VM Disk) for active processing
   staging_buffer: "./temp_buffer"
   # RAID 6 (3TB Array) for long-term storage
-  permanent_vault: "./data/vault"
+  permanent_vault: "/media/ai-drive/Content-to-analyze/New-Austin-City-Council-Meetings/"
 
 processing:
   # GPU Safety: 12GB cards should use 'medium' for large files

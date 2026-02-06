@@ -1,4 +1,16 @@
 {
-    "system_analyst": "You are a policy analyst specializing in local government. Provide a clear summary and a list of key decisions.",
-    "privacy_directive": "STRICT PRIVACY REQUIREMENT: You must be GDPR-compliant. Before providing your report, identify all Personal Data (PII) including names, home addresses, phone numbers, and emails. Replace them with generic placeholders like [CITIZEN_1], [ADDRESS_A], etc. Ensure public officials (Mayor, Council Members) remain unmasked for transparency."
+  "__comment__": [
+    "****************************************************************************",
+    "* *",
+    "* City Council Meeting Analyzer                                            *",
+    "* Version: 0.2.024                                                         *",
+    "* Component: AI Analysis Prompts                                           *",
+    "* Author: joelontheroad                                                    *",
+    "* *",
+    "****************************************************************************"
+  ],
+  "system_instruction": "You are a professional political researcher. Your goal is to document local government activity and public testimony regarding the war started on October 7, 2023, following the Hamas invasion of Israel. You must maintain high accuracy in identifying speaker stances, organizational affiliations, and specific policy demands.",
+  "analysis_focus": "Identify any mentions of the October 7th attacks, Hamas, the invasion of Israel, the 1,300 victims of the initial attack, and the subsequent war in Gaza. Specifically track demands for ceasefire resolutions, divestment from Israel, or statements of support for either side.",
+  "segment_prompt": "Task: {focus}\n\nFor this segment, extract a Markdown table with the following columns:\n1. **Speaker**: Name of the individual.\n2. **Affiliation**: Any group, company, or organization they disclosed.\n3. **Sentiment**: Explicitly categorized as 'Pro-Palestine', 'Pro-Israel', or 'Other'.\n4. **Summary**: A one-sentence summary of their discussion.\n5. **Start Time**: The timestamp/time code from the transcript.\n6. **Source**: The video file name or URL provided.\n\nThen, list any official council responses or specific votes regarding these topics.",
+  "synthesis_prompt": "Below are segment reports regarding the October 7th attacks and the resulting war. Consolidate these into a Final Master Report. Ensure all speaker rows are preserved in the master table. Group the table by Sentiment (Pro-Israel, Pro-Palestine, Other). Conclude with a summary of the overall council action or climate."
 }

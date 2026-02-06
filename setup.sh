@@ -1,28 +1,31 @@
-#!/bin/bash
-# """
-# Project: City-Council-Meeting-Analyzer
-# Version: V0.2.004
-# Security: NIST-Aligned Privacy Protection
-# Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
-# """
+# ****************************************************************************
+# * *
+# * City Council Meeting Analyzer                                            *
+# * Component: System Setup & Environment Sync                               *
+# * *
+# ****************************************************************************
 
-echo "🚀 Initializing V0.2.004 Environment..."
+echo "🔧 Synchronizing environment..."
 
-# 1. Create Directory Structure
-mkdir -p temp_buffer
-mkdir -p data/vault/raw_video
-mkdir -p data/vault/transcripts
-mkdir -p reports
-
-# 2. Check for FFmpeg (Required for FixupM3u8)
-if ! command -v ffmpeg &> /dev/null; then
-    echo "⚠️ FFmpeg not found. Installing..."
-    sudo apt update && sudo apt install -y ffmpeg
-else
-    echo "✅ FFmpeg is installed."
+# 1. Ensure Virtual Environment exists
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+    echo "✅ Created new virtual environment."
 fi
 
-# 3. Install Python Dependencies
-pip install -r requirements.txt
+# 2. Activate
+source venv/bin/activate
 
-echo "✅ Setup complete. Ready for local-first analysis."
+# 3. Update core tools
+pip install --upgrade pip
+
+# 4. Install from manifest
+if [ -f "requirements.txt" ]; then
+    echo "📦 Installing dependencies from requirements.txt..."
+    pip install -r requirements.txt
+else
+    echo "⚠️ requirements.txt not found! Installing defaults..."
+    pip install yt-dlp requests openai-whisper
+fi
+
+echo "🎉 Environment is synchronized and ready."

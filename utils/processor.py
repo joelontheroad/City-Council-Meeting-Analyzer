@@ -1,8 +1,8 @@
 # ****************************************************************************
 # * *
 # * City Council Meeting Analyzer                                            *
-# * Version: 0.2.007                                                         *
-# * Component: AI Analysis & Privacy Processor                               *
+# * Version: 0.2.023                                                         *
+# * Component: AI Processor (Metadata & Table Injection)                      *
 # * Author: joelontheroad                                                    *
 # * *
 # ****************************************************************************
@@ -12,57 +12,59 @@ import json
 import os
 
 class MeetingProcessor:
-    def __init__(self, endpoint="http://localhost:1234/v1"):
-        self.endpoint = f"{endpoint}/chat/completions"
-        self.config_path = os.path.join("config", "prompts.json")
-        
+    def __init__(self, api_url="http://localhost:1234/v1/chat/completions"):
+        self.api_url = api_url
+        self.prompts = self._load_prompts()
+
     def _load_prompts(self):
-        """Loads AI instructions from the config file."""
-        default_prompts = {
-            "system_analyst": "You are a policy analyst.",
-            "privacy_directive": "Mask all PII."
-        }
-        
-        if not os.path.exists(self.config_path):
-            return default_prompts
-            
+        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'configs', 'prompts.json')
         try:
-            with open(self.config_path, 'r') as f:
+            with open(config_path, 'r') as f:
                 return json.load(f)
-        except Exception as e:
-            print(f"⚠️ Warning: Could not read prompts.json: {e}")
-            return default_prompts
+        except:
+            return {"system_instruction": "Expert Analyst", "analysis_focus": "Gaza war", "segment_prompt": "{focus}", "synthesis_prompt": "Combine."}
 
-    def process(self, transcript_text, mask=False):
-        """
-        Sends transcript to LMStudio.
-        Applies GDPR masking via the system prompt if 'mask' is True.
-        """
-        prompts = self._load_prompts()
+    def process(self, text, mask=False, source_name="Unknown Source"):
+        if len(text) > 15000:
+            return self.summarize_recursive(text, source_name)
         
-        # Build the system instruction
-        system_content = prompts.get("system_analyst", "")
-        if mask:
-            # Combine the analyst role with the strict GDPR requirements
-            system_content += " " + prompts.get("privacy_directive", "")
+        focus = self.prompts['analysis_focus']
+        # Inject source name into the prompt instruction
+        full_instruction = f"SOURCE MATERIAL: {source_name}\n\n{self.prompts['segment_prompt'].format(focus=focus)}"
+        return self._call_llm(text, full_instruction)
 
+    def summarize_recursive(self, text, source_name):
+        chunks = self.chunk_text(text)
+        summaries = []
+        focus = self.prompts['analysis_focus']
+        segment_instr = f"SOURCE MATERIAL: {source_name}\n\n{self.prompts['segment_prompt'].format(focus=focus)}"
+
+        for i, chunk in enumerate(chunks):
+            print(f"🧠 Analyzing Chapter {i+1}/{len(chunks)}...")
+            summaries.append(self._call_llm(chunk, segment_instr))
+
+        print("📝 Synthesizing Final Master Report...")
+        combined = "\n\n".join(summaries)
+        return self._call_llm(combined, self.prompts['synthesis_prompt'])
+
+    def chunk_text(self, text, max_chars=12000):
+        chunks = []; current = ""
+        for line in text.split('\n'):
+            if len(current) + len(line) < max_chars: current += line + "\n"
+            else: chunks.append(current); current = line + "\n"
+        if current: chunks.append(current)
+        return chunks
+
+    def _call_llm(self, text, instruction):
         payload = {
             "messages": [
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": f"Transcript to analyze:\n\n{transcript_text}"}
+                {"role": "system", "content": self.prompts['system_instruction']},
+                {"role": "user", "content": f"{instruction}\n\nTEXT:\n{text}"}
             ],
-            "temperature": 0.2,
-            "model": "local-model" # LMStudio usually ignores this, but it's required for the API
+            "temperature": 0.1
         }
-
-        print(f"🧠 Analysis Started (GDPR Masking: {'ENABLED' if mask else 'DISABLED'})")
-        
         try:
-            response = requests.post(self.endpoint, json=payload, timeout=300) # 5 min timeout for long transcripts
-            if response.status_code == 200:
-                result = response.json()
-                return result['choices'][0]['message']['content']
-            else:
-                return f"❌ LMStudio API Error: {response.status_code}"
+            r = requests.post(self.api_url, json=payload, timeout=300)
+            return r.json()['choices'][0]['message']['content']
         except Exception as e:
-            return f"❌ Connection Error: Is LMStudio running at {self.endpoint}? {e}"
+            return f"❌ Error: {e}"
