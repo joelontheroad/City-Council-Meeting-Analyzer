@@ -1,58 +1,85 @@
-# """
-# Project: City-Council-Meeting-Analyzer
-# Version: V0.2.004
-# Security: NIST-Aligned Privacy Protection
-# Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
-# """
+# ****************************************************************************
+# * *
+# * City Council Meeting Analyzer                                           *
+# * Version: 0.2.004                                                        *
+# * Author: joelontheroad                                                   *
+# * License: As-Is / Experimental                                           *
+# * *
+# ****************************************************************************
 
-# City-Council-Meeting-Analyzer (V0.2.004)
+# City Council Meeting Analyzer (V0.2.004)
 
-A privacy-first, local-only pipeline for analyzing city council meetings. This project uses salted HMAC pseudonymization to protect PII while leveraging local NVIDIA GPUs for transcription and intent analysis.
+## 📖 Overview
+The **City Council Meeting Analyzer** is a configurable, private, AI-powered tool built to transcribe municipal meeting videos, summarize public testimony, and report on speaker sentiment.
 
-## 🛡️ Privacy & Compliance (NIST 800-122)
-This project is built on the principle of **Operational Autonomy**. 
-- **No Cloud PII:** All transcripts and raw videos remain on local or private network storage (RAID).
-- **Salted Masking:** Personal names are transformed into consistent hex-IDs using a local secret salt.
-- **Git Safety:** Sensitive configuration (`.env`) and data directories are strictly excluded from version control via `.gitignore`.
+### 🛡️ Privacy & Security by Design
+Designed with **Security by Design** principles and inspired by **GDPR** and **NIST 800-122** specifications, this tool prioritizes local-first processing. To protect civil liberties, the system allows you to mask the names of speakers, enabling you to distribute findings while maintaining participant anonymity.
 
-## 💾 Tiered Storage Architecture
-To handle massive video files (12GB+) in a virtualized environment (Proxmox), the system uses a dual-tier storage strategy:
-1. **RAID 1 Buffer (Fast):** Used for initial downloads and `ffmpeg` fixups to maximize I/O speed.
-2. **RAID 6 Vault (Archival):** Used for long-term storage of MP4s and generated transcripts.
+### 🧠 Intelligent Analysis
+* **Modular Connectors:** Currently optimized for Austin City Council (Winter 2026).
+* **Smart Re-analysis:** If a video is already in your vault, the program skips the download and moves straight to AI analysis.
+* **Keywords:** Refine AI summaries by providing specific topics of interest.
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
-- **OS:** Ubuntu / Pop!_OS (Optimized for NVIDIA/CUDA)
-- **Hardware:** NVIDIA GPU (12GB+ VRAM recommended)
-- **Software:** FFmpeg, Python 3.10+, CUDA Toolkit
+## 🚀 Installation & Setup
 
-### Installation (The "Dog Food" Run)
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/joelontheroad/City-Council-Meeting-Analyzer.git](https://github.com/joelontheroad/City-Council-Meeting-Analyzer.git)
-   cd City-Council-Meeting-Analyzer
-   ```
-2. **Run the setup script:**
-   ```bash
-   chmod +x setup.sh
-   ./setup.sh
-   ```
-3. **Configure your Environment:**
-   Create a `.env` file in the root directory and add your secret salt:
-   ```text
-   PSEUDO_SALT=your_random_string_here
-   ```
+### 1. Project Prep
+```bash
+git clone [https://github.com/joelontheroad/City-Council-Meeting-Analyzer.git](https://github.com/joelontheroad/City-Council-Meeting-Analyzer.git) .
+chmod +x setup.sh
+./setup.sh
+```
 
-## ⚙️ Configuration (`configs/default.yaml`)
-You can tune the system performance by adjusting the YAML:
-- `buffer_path`: Point this to your fast VM disk (RAID 1).
-- `vault_path`: Point this to your high-capacity mount (RAID 6).
-- `model_size`: Default is `medium` to ensure stability on 12GB GPUs.
-- `force_skip`: Add meeting IDs here to blacklist them from processing.
+### 2. Privacy Key (Essential for Masking)
+The program uses a secret "salt" to generate consistent pseudonyms for speakers.
+```bash
+echo "PSEUDO_SALT=$(openssl rand -hex 32)" > .env
+```
 
-## 🛠️ Usage
-- **Full Run:** `python3 main.py`
-- **Download Only:** `python3 main.py --download-only`
-- **Re-Analyze Historical Data:** `python3 main.py --local-only`
-  *(Note: This skips transcription if a .txt file already exists in the Vault)*
+### 3. Storage Configuration
+```bash
+source venv/bin/activate
+python3 configure_paths.py
+```
+
+#### 📂 Understanding the Two Paths
+The script will ask for two distinct locations to optimize performance:
+1.  **The Staging Buffer (Local Storage):** Used for downloading and "stitching" video chunks. Using your local disk (OS drive) is much faster than a network drive for this task.
+2.  **The Permanent Vault (Large Storage):** Where the final .mp4 and transcripts are stored for AI analysis. Use your high-capacity drive here (e.g., /mnt/media-drive/).
+
+---
+
+## 🔌 Activate the Environment
+Before running the analyzer, you must activate the virtual environment:
+```bash
+source venv/bin/activate
+```
+*(Type deactivate when you are finished to return to your normal terminal.)*
+
+---
+
+## 🎬 First Run: Analyze a Meeting
+
+### Option A: Analyze a single URL
+Run this to test the system with a live Austin meeting. **Note:** Do not use brackets or quotes around the URL.
+```bash
+python3 main.py --url [https://austintx.new.swagit.com/videos/300507/0/](https://austintx.new.swagit.com/videos/300507/0/) --mask
+```
+
+### Option B: Batch analysis
+Create a text file (e.g., meetings.txt) with one URL per line. Do not include brackets, commas, or quotes in the file.
+```bash
+python3 main.py --file meetings.txt --mask
+```
+
+> [!TIP]
+> **Smart Detection:** If you have already downloaded the video, simply ensure the .mp4 is in your vault/raw_video/ folder. The program will skip the download and go straight to work.
+
+---
+
+## ❓ Getting Help
+To see all available command-line flags, including keyword filtering options:
+```bash
+python3 main.py --help
+```
