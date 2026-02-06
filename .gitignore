@@ -1,38 +1,44 @@
-# """
-# Project: City-Council-Meeting-Analyzer
-# Version: V0.2.004
-# Security: NIST-Aligned Privacy Protection
-# Principles: NIST SP 800-122 Aligned (Salted Pseudonymization & Operational Autonomy)
-# """
+# ****************************************************************************
+# * *
+# * City Council Meeting Analyzer                                            *
+# * Version: 0.2.034                                                         *
+# * Component: Git Exclusion Rules                                           *
+# * Author: joelontheroad                                                    *
+# * *
+# ****************************************************************************
 
-# Local Secrets
-.env
-
-# Storage Buffers (RAID 1 Mirror)
-temp_buffer/
-*.mp4
-*.m3u8
-*.ts
-
-# Data Vault (RAID 6 Archival)
-# We ignore the data directory to keep videos and transcripts off GitHub
-data/
-vault/
-
-# Python Environment & Cache
+# --- Python Environment ---
 __pycache__/
 *.py[cod]
 *$py.class
-.venv/
-env/
 venv/
-.pytest_cache/
+.env
 
-# System Files
+# --- Local Configuration ---
+# We keep default.yaml in the repo as a template, 
+# but ignore local overrides if you create them.
+configs/local.yaml
+
+# --- Data & Storage (CRITICAL) ---
+# We ignore the actual heavy content to keep the repo small.
+# The program will recreate these folders as needed.
+data/staging_buffer/*
+data/vault/videos/*
+data/vault/transcripts/*
+data/vault/reports/*
+
+# Keep the folder structure but ignore the content
+!data/staging_buffer/.gitkeep
+!data/vault/videos/.gitkeep
+!data/vault/transcripts/.gitkeep
+!data/vault/reports/.gitkeep
+
+# --- One-time Utilities ---
+# Ignoring the migration script so it doesn't clutter the main repo
+migrate_legacy_files.py
+
+# --- System Files ---
 .DS_Store
 Thumbs.db
-
-# Reports (Analysis output)
-reports/*.pdf
-reports/*.csv
-reports/*.json
+*.tmp
+*.log
